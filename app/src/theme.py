@@ -14,7 +14,7 @@ ERROR = "#F32929"
 WARNING = "#e2a04a"
 SUCCESS = "#4ae27a"
 DOWNLOADING= "#CCD9E6"
-CARD_BACKGROUND= "#56697B"
+CARD_BACKGROUND= "#CCD9E6"
 TEXT_DARK = "#1a1a1a"         # dark text, used inside the light card
 
 

@@ -15,8 +15,9 @@ WARNING = "#e2a04a"
 SUCCESS = "#4ae27a"
 DOWNLOADING= "#CCD9E6"
 CARD_BACKGROUND= "#CCD9E6"
-TEXT_DARK = "#1a1a1a"         # dark text, used inside the light card
-
+TEXT_DARK = "#1a1a1a"       
+PROGRESS_BAR = "#CCD9E6"
+PROGRESS_CHECK = "#56697B"
 
 
 FONT_FAMILY = "Arial"

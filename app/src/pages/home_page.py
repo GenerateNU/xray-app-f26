@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import (
     QWidget, QLabel, QPushButton,
@@ -8,6 +8,9 @@ import theme
 
 
 class HomePage(QWidget):
+    start_requested = Signal()
+    jog_requested = Signal()
+
     def __init__(self):
         super().__init__()
 
@@ -41,7 +44,7 @@ class HomePage(QWidget):
         home_layout.addStretch()
 
     def _build_face_select_card(self):
-        # light outer card
+        # light outer card 
         card = QFrame()
         card.setObjectName("card")
         card.setFixedSize(315, 380)
@@ -131,7 +134,7 @@ class HomePage(QWidget):
 
         return card
 
-    def _build_button_col(self):
+    def _build_button_col(self) :
         right_col = QVBoxLayout()
         right_col.setSpacing(18)
         right_col.addStretch()  # pushes the buttons down to the bottom of the card
@@ -147,4 +150,7 @@ class HomePage(QWidget):
         right_col.addWidget(self.jog_btn)
 
         right_col.addSpacing(6)
+        self.start_btn.clicked.connect(self.start_requested)
+        self.jog_btn.clicked.connect(self.jog_requested)
+
         return right_col

@@ -6,8 +6,9 @@ from PySide6.QtWidgets import (
 )
 import theme
 from pages.home_page import HomePage
-from pages.vixz.vizx_page import VizXPage
-from pages.vixz.scanning_page import ScanPage
+from pages.vizx.vizx_page import VizXPage
+from pages.vizx.scanning_page import ScanPage
+from pages.vizx.jogging_page import JoggingPage
 
 
 class ClickableLabel(QLabel):
@@ -34,16 +35,21 @@ class MainWindow(QWidget):
         self.home_page = HomePage()
         self.vizx_page = VizXPage()
         self.scan_page = ScanPage()
+        self.jogging_page = JoggingPage()
 
         # the stack holds every page, but only shows one at a time
         self.pages = QStackedWidget()
         self.pages.addWidget(self.home_page)
         self.pages.addWidget(self.vizx_page)
         self.pages.addWidget(self.scan_page)
+        self.pages.addWidget(self.jogging_page)
+
 
         # link pages together
         self.home_page.start_requested.connect(self._open_scan)
-        self.home_page.jog_requested.connect(self._open_vizx)
+        self.home_page.jog_requested.connect(self._open_jogging)
+        self.jogging_page.stop_requested.connect(self._open_home)
+        self.jogging_page.scan_requested.connect(self._open_home)
         self.scan_page.stop_requested.connect(self._open_home)
 
         layout = QVBoxLayout(self)
@@ -87,6 +93,9 @@ class MainWindow(QWidget):
 
     def _open_scan(self):
         self.pages.setCurrentWidget(self.scan_page)
+
+    def _open_jogging(self):
+        self.pages.setCurrentWidget(self.jogging_page)
 
 
 if __name__ == "__main__":

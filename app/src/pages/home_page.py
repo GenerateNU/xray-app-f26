@@ -1,17 +1,18 @@
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import (
-    QWidget, QLabel, QPushButton,
+    QWidget, QLabel, QPushButton, QGridLayout,
     QVBoxLayout, QHBoxLayout, QListWidget, QLineEdit, QFrame
 )
 import theme
+from widgets.model_view import ModelView
 
 
 class HomePage(QWidget):
     start_requested = Signal()
     jog_requested = Signal()
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.button_style = f"""
@@ -30,111 +31,75 @@ class HomePage(QWidget):
 
         self._build_ui()
 
-    def _build_ui(self):
-        home_layout = QVBoxLayout(self)
-        home_layout.setContentsMargins(48, 55, 48, 44)
+    def _build_ui(self) -> None :
+        # Home is a grid (rows + columns):
+        #
+        #           col 0                col 1
+        #   row 0   3D model        |
+        #   row 1   radiation input |   START / JOG
+        #
+        grid = QGridLayout(self)
 
-        content_row = QHBoxLayout()
-        content_row.setSpacing(40)
-        content_row.addWidget(self._build_face_select_card())
-        content_row.addLayout(self._build_button_col())
-        content_row.addStretch()  # leaves the empty space on the right like the figma
+        # empty space around the edges: left, top, right, bottom
+        # (top is bigger because the nav bar sits above the page)
+        grid.setContentsMargins(52, 76, 72, 54)
 
-        home_layout.addLayout(content_row)
-        home_layout.addStretch()
+        # gap between the model and the buttons (side to side)
+        grid.setHorizontalSpacing(106)
+        # gap between the model and the radiation input (top to bottom)
+        grid.setVerticalSpacing(43)
 
-    def _build_face_select_card(self):
-        # light outer card 
-        card = QFrame()
-        card.setObjectName("card")
-        card.setFixedSize(315, 380)
-        card.setStyleSheet(f"""
-            #card {{
-                background-color: {theme.CARD_BACKGROUND};
-                border-radius: 6px;
-            }}
-        """)
+        # 3D model goes in the top left (row 0, col 0)
+        self.model_view = ModelView()
+        grid.addWidget(self.model_view, 0, 0)
 
-        card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(22, 22, 22, 22)
-        card_layout.setSpacing(40)
+        # radiation input goes under the model (row 1, col 0)
+        # AlignLeft keeps it its own size and pushed left instead of centered
+        grid.addWidget(self._build_radiation_input(), 1, 0, Qt.AlignLeft)
 
-        # dark inner box holding the face list
-        face_box = QFrame()
-        face_box.setObjectName("faceBox")
-        face_box.setFixedHeight(213)
-        face_box.setStyleSheet(f"""
-            #faceBox {{
-                background-color: {theme.BACKGROUND};
-                border-radius: 6px;
-            }}
-        """)
+        # buttons go on the right (row 0, col 1) and span 2 rows, 1 column
+        # spanning both rows gives them the full height, and the stretch inside
+        # _build_button_col pushes them down to sit level with the radiation input
+        grid.addLayout(self._build_button_col(), 0, 1, 2, 1)
 
-        face_layout = QVBoxLayout(face_box)
-        face_layout.setContentsMargins(16, 14, 16, 14)
-        face_layout.setSpacing(2)
+        # when the window gets bigger, only the model grows
+        # (it's in col 0 and row 0, everything else stays its fixed size)
+        grid.setColumnStretch(0, 1)
+        grid.setRowStretch(0, 1)
 
-        select_face_label = QLabel("select face")
-        select_face_label.setStyleSheet(f"""
-            color: {theme.TEXT_PRIMARY};
-            font-family: {theme.FONT_FAMILY};
-        """)
-        face_layout.addWidget(select_face_label)
-
-        ## REPLACE THIS LATER (3D)
-        self.face_list = QListWidget()
-        self.face_list.addItems(["side1", "side2", "side3", "side4", "side5", "all"])
-        self.face_list.setCurrentRow(0)
-        self.face_list.setFocusPolicy(Qt.NoFocus)  # gets rid of the blue macOS focus ring
-        self.face_list.setStyleSheet(f"""
-            QListWidget {{
-                background: transparent;
-                border: none;
-                outline: 0;
-                color: {theme.TEXT_PRIMARY};
-                font-family: {theme.FONT_FAMILY};
-            }}
-            QListWidget::item {{
-                padding: 1px 2px;
-                border-radius: 3px;
-            }}
-            QListWidget::item:hover {{
-                background-color: rgba(255, 255, 255, 20);
-            }}
-            QListWidget::item:selected {{
-                background-color: rgba(255, 255, 255, 45);
-                color: {theme.TEXT_PRIMARY};
-            }}
-        """)
-        face_layout.addWidget(self.face_list)
-
-        card_layout.addWidget(face_box)
-
-        # dark radiation input (label lives inside as placeholder, like the figma)
+    def _build_radiation_input(self) -> QLineEdit:
+        # one-line text box where the user types the radiation threshold
         self.radiation_input = QLineEdit()
-        self.radiation_input.setPlaceholderText("Radiation Level")
-        self.radiation_input.setFixedHeight(42)
+
+        # hint text that shows when it's empty, disappears when you type
+        self.radiation_input.setPlaceholderText("radiation level")
+
+        # fixed width 255, height 48 so the grid doesn't stretch it
+        self.radiation_input.setFixedSize(255, 48)
+
+        # light blue box (same as the buttons), dark text, rounded corners
+        # padding keeps the text from touching the left edge
         self.radiation_input.setStyleSheet(f"""
             QLineEdit {{
-                background-color: {theme.BACKGROUND};
-                color: {theme.TEXT_PRIMARY};
+                background-color: {theme.BUTTON_PRIMARY};
+                color: {theme.TEXT_DARK};
                 border: none;
-                border-radius: 4px;
-                padding: 0px 10px;
+                border-radius: 6px;
+                padding: 0px 12px;
                 font-family: {theme.FONT_FAMILY};
             }}
         """)
-        # make the placeholder text light instead of the default gray
+
+        # stylesheets can't change placeholder color in Qt,
+        # so we set it through the palette instead (dark so it shows on the light box)
         palette = self.radiation_input.palette()
-        palette.setColor(QPalette.PlaceholderText, QColor(theme.TEXT_PRIMARY))
+        palette.setColor(QPalette.PlaceholderText, QColor(theme.TEXT_DARK))
         self.radiation_input.setPalette(palette)
 
-        card_layout.addWidget(self.radiation_input)
-        card_layout.addStretch()
+        # hand it back so _build_ui can put it in the grid
+        return self.radiation_input
 
-        return card
-
-    def _build_button_col(self) :
+    def _build_button_col(self) -> QVBoxLayout:
         right_col = QVBoxLayout()
         right_col.setSpacing(18)
         right_col.addStretch()  # pushes the buttons down to the bottom of the card

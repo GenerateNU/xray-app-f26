@@ -9,6 +9,7 @@ from pages.home_page import HomePage
 from pages.vizx.vizx_page import VizXPage
 from pages.vizx.scanning_page import ScanPage
 from pages.vizx.jogging_page import JoggingPage
+from widgets.model_view import ModelView
 
 
 class ClickableLabel(QLabel):

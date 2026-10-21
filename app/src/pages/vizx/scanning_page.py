@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
 )
 import theme
 from widgets.status import StatusLabel
+from widgets.model_view import ModelView
 
 
 class ScanPage(QWidget):
@@ -40,11 +41,11 @@ class ScanPage(QWidget):
 
         content_row = QHBoxLayout()
         content_row.setSpacing(40)
-        content_row.addStretch()  # leaves the empty space on the right like the figma
+        self.model_view = ModelView()
+        content_row.addWidget(self.model_view, 1)  # the 1 = take up all the extra width  # leaves the empty space on the right like the figma
         content_row.addLayout(self._build_button_col())
 
-        home_layout.addLayout(content_row)
-        home_layout.addStretch()
+        home_layout.addLayout(content_row, 1)  # the 1 = take up all the extra height
 
 
 

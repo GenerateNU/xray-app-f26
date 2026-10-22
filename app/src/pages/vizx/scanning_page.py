@@ -18,7 +18,7 @@ class ScanPage(QWidget):
         self.button_style = f"""
             QPushButton {{
                 background-color: {theme.BUTTON_PRIMARY};
-                color: {theme.BUTTON_TEXT};
+                color: {theme.TEXT_PRIMARY};
                 font-family: {theme.FONT_FAMILY};
                 font-size: {theme.FONT_SIZE_BUTTON};
                 border: none;

@@ -72,7 +72,7 @@ class HomePage(QWidget):
         self.radiation_input = QLineEdit()
 
         # hint text that shows when it's empty, disappears when you type
-        self.radiation_input.setPlaceholderText("radiation level")
+        self.radiation_input.setPlaceholderText("Radiation Level (μSv/h)")
 
         # fixed width 255, height 48 so the grid doesn't stretch it
         self.radiation_input.setFixedSize(255, 48)

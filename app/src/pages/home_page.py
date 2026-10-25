@@ -1,19 +1,17 @@
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import (
     QWidget, QLabel, QPushButton,
-    QVBoxLayout, QHBoxLayout, QListWidget, QLineEdit, QFrame
+    QVBoxLayout, QHBoxLayout, QListWidget, QFrame, QMessageBox, QDoubleSpinBox
 )
 import theme
 
 
 class HomePage(QWidget):
-    start_requested = Signal()
+    start_requested = Signal(list, float)
     jog_requested = Signal()
 
     def __init__(self):
         super().__init__()
-
         self.button_style = f"""
             QPushButton {{
                 background-color: {theme.BUTTON_PRIMARY};
@@ -30,6 +28,13 @@ class HomePage(QWidget):
 
         self._build_ui()
 
+    def _selected_faces(self):
+        """The faces to scan. 'all' becomes every side."""
+        picked = [item.text() for item in self.face_list.selectedItems()]
+        if "all" in picked:
+            return ["side1", "side2", "side3", "side4", "side5"]
+        return picked
+
     def _build_ui(self):
         home_layout = QVBoxLayout(self)
         home_layout.setContentsMargins(48, 55, 48, 44)
@@ -44,7 +49,7 @@ class HomePage(QWidget):
         home_layout.addStretch()
 
     def _build_face_select_card(self):
-        # light outer card 
+        # light outer card
         card = QFrame()
         card.setObjectName("card")
         card.setFixedSize(315, 380)
@@ -110,12 +115,16 @@ class HomePage(QWidget):
 
         card_layout.addWidget(face_box)
 
-        # dark radiation input (label lives inside as placeholder, like the figma)
-        self.radiation_input = QLineEdit()
-        self.radiation_input.setPlaceholderText("Radiation Level")
+        # number-only box for the radiation threshold
+        self.radiation_input = QDoubleSpinBox()
+        self.radiation_input.setRange(0, 10000)             # min, max
+        self.radiation_input.setDecimals(3)                 # up to 3 decimal places
+        self.radiation_input.setValue(1.0)                  # TEMP default, ask Sean for the real one
+        self.radiation_input.setPrefix("Radiation Level: ") # text before the number
+        self.radiation_input.setSuffix(" μSv/h")            # units after the number
         self.radiation_input.setFixedHeight(42)
         self.radiation_input.setStyleSheet(f"""
-            QLineEdit {{
+            QDoubleSpinBox {{
                 background-color: {theme.BACKGROUND};
                 color: {theme.TEXT_PRIMARY};
                 border: none;
@@ -124,17 +133,13 @@ class HomePage(QWidget):
                 font-family: {theme.FONT_FAMILY};
             }}
         """)
-        # make the placeholder text light instead of the default gray
-        palette = self.radiation_input.palette()
-        palette.setColor(QPalette.PlaceholderText, QColor(theme.TEXT_PRIMARY))
-        self.radiation_input.setPalette(palette)
 
         card_layout.addWidget(self.radiation_input)
         card_layout.addStretch()
 
         return card
 
-    def _build_button_col(self) :
+    def _build_button_col(self):
         right_col = QVBoxLayout()
         right_col.setSpacing(18)
         right_col.addStretch()  # pushes the buttons down to the bottom of the card
@@ -150,7 +155,45 @@ class HomePage(QWidget):
         right_col.addWidget(self.jog_btn)
 
         right_col.addSpacing(6)
-        self.start_btn.clicked.connect(self.start_requested)
+        self.start_btn.clicked.connect(self._on_start)      # START asks first
         self.jog_btn.clicked.connect(self.jog_requested)
 
         return right_col
+
+    def _on_start(self):
+        if self._confirm_scan() and self._final_confirm():
+            faces = self._selected_faces()
+            level = self.radiation_input.value()
+            print("SENDING:", faces, level)   # TEMPORARY, to check it works
+            self.start_requested.emit(faces, level)
+
+    def _confirm_scan(self):
+        """Ask the user to double check before scanning. Returns True if they hit Confirm."""
+        level = self.radiation_input.value()
+        faces = ", ".join(self._selected_faces()) or "(none selected)"
+
+        popup = QMessageBox(self)
+        popup.setWindowTitle("Confirm Scan")
+        popup.setText("Are you sure you want to start this scan?")
+        popup.setInformativeText(f"Radiation level: {level} μSv/h\nSelected faces: {faces}")
+
+        confirm_btn = popup.addButton("Confirm", QMessageBox.ButtonRole.AcceptRole)
+        popup.addButton(QMessageBox.StandardButton.Cancel)
+
+        popup.exec()
+        return popup.clickedButton() == confirm_btn
+
+    def _final_confirm(self):
+        """Second confirm/check"""
+        popup = QMessageBox(self)
+        popup.setWindowTitle("final confirmation")
+        popup.setIcon(QMessageBox.Icon.Warning)   # warning icon so it looks serious
+        popup.setText("Are you sure about this scan?")
+        popup.setInformativeText("The machine WILL start moving once you confirm.")
+
+        start_btn = popup.addButton("Start Scan", QMessageBox.ButtonRole.AcceptRole)
+        cancel_btn = popup.addButton(QMessageBox.StandardButton.Cancel)
+        popup.setDefaultButton(cancel_btn)        # Enter = Cancel, so you can't accidentally double-tap through
+
+        popup.exec()
+        return popup.clickedButton() == start_btn

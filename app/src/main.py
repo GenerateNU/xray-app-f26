@@ -46,16 +46,28 @@ class MainWindow(QWidget):
 
 
         # link pages together
-        self.home_page.start_requested.connect(self._open_scan)
+        self.home_page.start_requested.connect(self._start_scan)
         self.home_page.jog_requested.connect(self._open_jogging)
         self.jogging_page.stop_requested.connect(self._open_home)
         self.jogging_page.scan_requested.connect(self._open_home)
-        self.scan_page.stop_requested.connect(self._open_home)
+        self.scan_page.stop_requested.connect(self._stop_scan)
+        self.vizx_page.start_requested.connect(self._open_home)
+        self.vizx_page.jog_requested.connect(self._open_jogging)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(self._build_nav_row())
         layout.addWidget(self.pages)
+
+        # update the underline every time the page changes, and once at startup
+        self.pages.currentChanged.connect(self._update_nav)
+        self._update_nav()
+
+    def _set_nav_locked(self, locked):
+        """Turn the nav tabs off during a scan so STOP is the only way out."""
+        self.home_label.setEnabled(not locked)
+        self.vizx_label.setEnabled(not locked)
+        self._update_nav()   # restyle so they go gray (or back to white)
 
     def _build_nav_row(self):
         nav_row = QHBoxLayout()
@@ -96,6 +108,32 @@ class MainWindow(QWidget):
 
     def _open_jogging(self):
         self.pages.setCurrentWidget(self.jogging_page)
+
+    def _start_scan(self, faces, level):
+        self.scan_page.start_scan(faces, level)  # give the scan page the data
+        self._open_scan()   
+        self._set_nav_locked(True) 
+
+    def _stop_scan(self):
+        self._set_nav_locked(False)   # unlock the nav
+        self._open_home()
+
+    def _update_nav(self, index=None):
+        """Underline the tab for whichever page is showing."""
+        on_home = self.pages.currentWidget() == self.home_page
+        self._style_tab(self.home_label, active=on_home)
+        self._style_tab(self.vizx_label, active=not on_home)  # viz-x, scanning, jogging all count as viz-x
+
+    def _style_tab(self, label, active):
+        """Same style for both tabs: underlined if active, gray if locked."""
+        underline = "underline" if active else "none"
+        color = theme.TEXT_PRIMARY if label.isEnabled() else theme.NAV_DISABLED
+        label.setStyleSheet(f"""
+            color: {color};
+            font-family: {theme.FONT_FAMILY};
+            font-size: {theme.FONT_SIZE_HEADER};
+            text-decoration: {underline};
+        """)
 
 
 if __name__ == "__main__":

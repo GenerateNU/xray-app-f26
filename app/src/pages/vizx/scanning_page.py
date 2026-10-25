@@ -14,10 +14,13 @@ class ScanPage(QWidget):
     def __init__(self):
         super().__init__()
 
+        self.faces = [] #faces being scanned
+        self.radiation_level = None
+
         self.button_style = f"""
             QPushButton {{
                 background-color: {theme.BUTTON_PRIMARY};
-                color: {theme.BUTTON_TEXT};
+                color: {theme.TEXT_PRIMARY};
                 font-family: {theme.FONT_FAMILY};
                 font-size: {theme.FONT_SIZE_BUTTON};
                 border: none;
@@ -37,6 +40,9 @@ class ScanPage(QWidget):
         self.status_label = StatusLabel("SYSTEM SCANNING...")
         home_layout.addWidget(self.status_label, 0, Qt.AlignHCenter)
         home_layout.addSpacing(14)
+
+        self.scan_info = StatusLabel("")
+        home_layout.addWidget(self.scan_info, 0, Qt.AlignHCenter)
 
         content_row = QHBoxLayout()
         content_row.setSpacing(40)
@@ -60,3 +66,8 @@ class ScanPage(QWidget):
 
         right_col.addStretch()  # pushes STOP to the top, like the figma
         return right_col
+
+    def start_scan(self, faces, level):
+        self.faces = faces
+        self.level = level
+        self.scan_info.setText(f"Faces: {', '.join(faces)}  |  Threshold: {level} μSv/h")

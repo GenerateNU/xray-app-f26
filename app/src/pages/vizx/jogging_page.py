@@ -19,7 +19,7 @@ class JoggingPage(QWidget):
         self.button_style = f"""
             QPushButton {{
                 background-color: {theme.BUTTON_PRIMARY};
-                color: {theme.BUTTON_TEXT};
+                color: {theme.TEXT_PRIMARY};
                 font-family: {theme.FONT_FAMILY};
                 font-size: {theme.FONT_SIZE_BUTTON};
                 border: none;
@@ -53,12 +53,6 @@ class JoggingPage(QWidget):
     def _build_button_col(self):
         right_col = QVBoxLayout()
         right_col.setSpacing(18)
-
-        self.stop_btn = QPushButton("STOP")
-        self.stop_btn.setFixedSize(196, 45)
-        self.stop_btn.setStyleSheet(self.button_style)
-        self.stop_btn.clicked.connect(self.stop_requested)
-        right_col.addWidget(self.stop_btn)
 
         self.scan_btn = QPushButton("SCAN")
         self.scan_btn.setFixedSize(196, 45)

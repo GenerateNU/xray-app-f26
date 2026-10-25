@@ -24,3 +24,9 @@ It is critical that on every single merge to main, you enable a specific subset 
 - Deployments (Sometimes its better to allocate another branch for deployments, such as `release` or `production`)
 
 You might find it useful to call some upstream workflows from [Shiperate](https://github.com/GenerateNU/shiperate/tree/main)
+
+## Branch Information: 
+
+gui-3d --> all 3d modeling features
+
+gui --> basic frontend features. 

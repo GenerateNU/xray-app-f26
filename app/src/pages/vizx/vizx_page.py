@@ -19,7 +19,7 @@ class VizXPage(QWidget):
         self.button_style = f"""
             QPushButton {{
                 background-color: {theme.BUTTON_PRIMARY};
-                color: {theme.TEXT_PRIMARY};
+                color: {theme.TEXT_SECONDARY};
                 font-family: {theme.FONT_FAMILY};
                 font-size: {theme.FONT_SIZE_BUTTON};
                 border: none;

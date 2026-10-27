@@ -34,12 +34,12 @@ class JoggingPage(QWidget):
         self._build_ui()
 
     def _build_ui(self):
-        home_layout = QVBoxLayout(self)
-        home_layout.setContentsMargins(48, 55, 48, 44)
+        left_col = QVBoxLayout(self)
+        left_col.setContentsMargins(48, 55, 48, 44)
 
         self.status_label = StatusLabel("SYSTEM JOGGING....")
-        home_layout.addWidget(self.status_label, 0, Qt.AlignHCenter)
-        home_layout.addSpacing(14)
+        left_col.addWidget(self.status_label, 0, Qt.AlignHCenter)
+        left_col.addSpacing(14)
 
         
         content_row = QHBoxLayout()
@@ -47,10 +47,13 @@ class JoggingPage(QWidget):
         content_row.addStretch()                # space on the left
         self.jog_pad = JogPad()
         content_row.addWidget(self.jog_pad)     # pad in the middle of the left area
-        content_row.addStretch()                # space on the right of the pad        content_row.addLayout(self._build_button_col())
+        content_row.addStretch()                # space on the right of the pad        
+        content_row.addLayout(self._build_button_col())
 
-        home_layout.addLayout(content_row)
-        home_layout.addStretch()
+        left_col.addLayout(content_row)
+        left_col.addStretch()
+
+        return left_col
 
 
     def _build_button_col(self):

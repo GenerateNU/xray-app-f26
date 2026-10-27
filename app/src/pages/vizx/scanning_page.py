@@ -6,6 +6,8 @@ from PySide6.QtWidgets import (
 )
 import theme
 from widgets.status import StatusLabel
+from widgets.progress_bar import ProgressBar
+
 
 
 class ScanPage(QWidget):
@@ -20,7 +22,7 @@ class ScanPage(QWidget):
         self.button_style = f"""
             QPushButton {{
                 background-color: {theme.BUTTON_PRIMARY};
-                color: {theme.TEXT_PRIMARY};
+                color: {theme.TEXT_SECONDARY};
                 font-family: {theme.FONT_FAMILY};
                 font-size: {theme.FONT_SIZE_BUTTON};
                 border: none;
@@ -46,13 +48,12 @@ class ScanPage(QWidget):
 
         content_row = QHBoxLayout()
         content_row.setSpacing(40)
-        content_row.addStretch()  # leaves the empty space on the right like the figma
+        self.progress = ProgressBar()
+        content_row.addWidget(self.progress)        # progress bar on the far left
+        content_row.addStretch()
         content_row.addLayout(self._build_button_col())
 
-        home_layout.addLayout(content_row)
-        home_layout.addStretch()
-
-
+        home_layout.addLayout(content_row, 1)   # the 1 = row gets all the extra height
 
     def _build_button_col(self):
         right_col = QVBoxLayout()
@@ -64,10 +65,17 @@ class ScanPage(QWidget):
         self.stop_btn.clicked.connect(self.stop_requested)
         right_col.addWidget(self.stop_btn)
 
-        right_col.addStretch()  # pushes STOP to the top, like the figma
+        right_col.addStretch() 
         return right_col
+
+
 
     def start_scan(self, faces, level):
         self.faces = faces
-        self.level = level
+        self.radiation_level = level
         self.scan_info.setText(f"Faces: {', '.join(faces)}  |  Threshold: {level} μSv/h")
+        self.progress.set_progress(0)   # new scan starts empty
+
+    def set_progress(self, percent):
+        """The backend calls this with the real scan progress."""
+        self.progress.set_progress(percent)

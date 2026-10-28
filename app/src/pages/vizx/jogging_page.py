@@ -13,14 +13,16 @@ from widgets.jog_pad import JogPad
 class JoggingPage(QWidget):
     stop_requested = Signal()
     scan_requested = Signal()
+    jog_pressed = Signal(str, int)   # axis, direction (passed up from the jog pad)
+    jog_released = Signal()
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.button_style = f"""
             QPushButton {{
                 background-color: {theme.BUTTON_PRIMARY};
-                color: {theme.TEXT_PRIMARY};
+                color: {theme.TEXT_SECONDARY};
                 font-family: {theme.FONT_FAMILY};
                 font-size: {theme.FONT_SIZE_BUTTON};
                 border: none;
@@ -41,11 +43,14 @@ class JoggingPage(QWidget):
         left_col.addWidget(self.status_label, 0, Qt.AlignHCenter)
         left_col.addSpacing(14)
 
+        self.jog_pad = JogPad()
+        self.jog_pad.jog_pressed.connect(self.jog_pressed)     # pass it up
+        self.jog_pad.jog_released.connect(self.jog_released)
+
         
         content_row = QHBoxLayout()
         content_row.setSpacing(40)
         content_row.addStretch()                # space on the left
-        self.jog_pad = JogPad()
         content_row.addWidget(self.jog_pad)     # pad in the middle of the left area
         content_row.addStretch()                # space on the right of the pad        
         content_row.addLayout(self._build_button_col())

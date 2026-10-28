@@ -1,23 +1,19 @@
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor, QPalette
-from PySide6.QtWidgets import (
-    QWidget, QLabel, QPushButton,
-    QVBoxLayout, QHBoxLayout, QListWidget, QLineEdit, QFrame
-)
+from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout
 import theme
 from widgets.status import StatusLabel
 from widgets.progress_bar import ProgressBar
 
 
-
 class ScanPage(QWidget):
-    stop_requested = Signal()
+    stop_requested = Signal()   # STOP clicked
+    scan_finished = Signal(list, float)   # faces, level
 
     def __init__(self):
         super().__init__()
 
-        self.faces = [] #faces being scanned
-        self.radiation_level = None
+        self.faces = []                # faces being scanned
+        self.radiation_level = None    # radiation threshold for this scan
 
         self.button_style = f"""
             QPushButton {{
@@ -34,6 +30,8 @@ class ScanPage(QWidget):
         """
 
         self._build_ui()
+
+    # ---------- layout ----------
 
     def _build_ui(self):
         home_layout = QVBoxLayout(self)
@@ -65,12 +63,13 @@ class ScanPage(QWidget):
         self.stop_btn.clicked.connect(self.stop_requested)
         right_col.addWidget(self.stop_btn)
 
-        right_col.addStretch() 
+        right_col.addStretch()   # keeps STOP at the top
         return right_col
 
-
+    # ---------- called from outside (main.py now, backend later) ----------
 
     def start_scan(self, faces, level):
+        """A new scan is starting: save what we're scanning and reset the bar."""
         self.faces = faces
         self.radiation_level = level
         self.scan_info.setText(f"Faces: {', '.join(faces)}  |  Threshold: {level} μSv/h")
@@ -79,3 +78,9 @@ class ScanPage(QWidget):
     def set_progress(self, percent):
         """The backend calls this with the real scan progress."""
         self.progress.set_progress(percent)
+        if percent >= 100:
+            self.finish_scan()
+
+    def finish_scan(self)-> None:
+        """Scan's done. Called at 100%, or later by the backend when the MCU says so."""
+        self.scan_finished.emit(self.faces, self.radiation_level)

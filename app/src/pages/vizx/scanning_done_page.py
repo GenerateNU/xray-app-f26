@@ -3,23 +3,26 @@ from datetime import datetime
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QMessageBox, QInputDialog
+    QWidget, QPushButton, QVBoxLayout, QHBoxLayout,
+    QMessageBox, QInputDialog, QDialog, QListWidget
 )
 import theme
 from widgets.status import StatusLabel
 from widgets.clickable_label import ClickableLabel
+from widgets.model_view import ModelView
 
 
 class ScanDonePage(QWidget):
     new_scan_requested = Signal()   # START → back Home to set up a new scan
     jog_requested = Signal()        # JOG → jogging page
 
-    def __init__(self) -> None:
+    def __init__(self, step_model):
         super().__init__()
+        self.step_model = step_model    # the loaded STEP, from main.py
 
-        self.faces = []
-        self.reports = []   # reports from the scan (the backend fills this in later)                # faces that were scanned
-        self.radiation_level = None    # threshold that was used
+        self.faces = []                 # faces that were scanned
+        self.radiation_level = None     # threshold that was used
+        self.reports = []               # reports from the scan (the backend fills this in later)
 
         self.button_style = f"""
             QPushButton {{
@@ -39,7 +42,7 @@ class ScanDonePage(QWidget):
 
     # ---------- layout ----------
 
-    def _build_ui(self)-> None:
+    def _build_ui(self):
         home_layout = QVBoxLayout(self)
         home_layout.setContentsMargins(48, 55, 48, 44)
 
@@ -52,8 +55,9 @@ class ScanDonePage(QWidget):
 
         content_row = QHBoxLayout()
         content_row.setSpacing(40)
-        content_row.addStretch()                         # space on the left (scan view goes here later)
-        content_row.addLayout(self._build_button_col())
+        self.model_view = ModelView(self.step_model, selectable=False)   # view-only, shows what was scanned
+        content_row.addWidget(self.model_view, 1)                         # model takes the left side
+        content_row.addLayout(self._build_button_col())                   # buttons on the right
 
         home_layout.addLayout(content_row, 1)
 
@@ -73,9 +77,9 @@ class ScanDonePage(QWidget):
         self.jog_btn.clicked.connect(self.jog_requested)
         right_col.addWidget(self.jog_btn)
 
-        right_col.addStretch()   # pushes DOWNLOAD to the bottom, like the figma
+        right_col.addStretch()   # pushes the reports link + DOWNLOAD to the bottom
 
-                # "3 reports" link (opens the reports popup)
+        # "3 reports" link (opens the reports popup)
         self.reports_link = ClickableLabel("0 reports")
         self.reports_link.setStyleSheet(f"""
             color: {theme.TEXT_PRIMARY};
@@ -86,7 +90,6 @@ class ScanDonePage(QWidget):
         self.reports_link.clicked.connect(self._show_reports)
         right_col.addWidget(self.reports_link)
 
-
         self.download_btn = QPushButton("DOWNLOAD")
         self.download_btn.setFixedSize(196, 45)
         self.download_btn.setStyleSheet(self.button_style)
@@ -95,21 +98,48 @@ class ScanDonePage(QWidget):
 
         return right_col
 
-    
+    # ---------- called from outside (main.py now, backend later) ----------
 
-    # ---------- called from outside (main.py) ----------
-
-    def show_results(self, faces, level)-> None:
+    def show_results(self, faces, level):
         """Main calls this when a scan finishes, with what was scanned."""
         self.faces = faces
         self.radiation_level = level
         self.scan_info.setText(f"Faces: {', '.join(faces)}  |  Threshold: {level} μSv/h")
+        self.model_view.set_selected(faces)   # show which sides were scanned
+        self.set_reports([])                  # new scan, so clear the old reports
 
-        self.set_reports([])
+    def set_reports(self, reports):
+        """The backend calls this with the reports from the scan."""
+        self.reports = reports
+        n = len(reports)
+        self.reports_link.setText(f"{n} report" if n == 1 else f"{n} reports")
+
+    # ---------- reports popup ----------
+
+    def _show_reports(self):
+        """The reports popup (Desktop 5)."""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Reports")
+        dialog.resize(420, 300)
+
+        layout = QVBoxLayout(dialog)
+        report_list = QListWidget()
+        if self.reports:
+            report_list.addItems(self.reports)
+        else:
+            report_list.addItem("No reports for this scan yet.")
+        layout.addWidget(report_list)
+
+
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(dialog.accept)   # accept = close the dialog
+        layout.addWidget(close_btn, 0, Qt.AlignRight)
+
+        dialog.exec()
 
     # ---------- download flow ----------
 
-    def _on_download(self)-> None:
+    def _on_download(self):
         """name → save → success, or fail with retry. Loops until it works or they cancel."""
         name = f"luXRay Scan {datetime.now():%Y-%m-%d %H-%M}"   # starting default name
         while True:
@@ -166,29 +196,3 @@ class ScanDonePage(QWidget):
 
         popup.exec()
         return popup.clickedButton() == retry_btn
-
-    def set_reports(self, reports):
-        """The backend calls this with the reports from the scan."""
-        self.reports = reports
-        n = len(reports)
-        self.reports_link.setText(f"{n} report" if n == 1 else f"{n} reports")
-
-    def _show_reports(self):
-        """The reports popup (Desktop 5)."""
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Reports")
-        dialog.resize(420, 300)
-
-        layout = QVBoxLayout(dialog)
-        report_list = QListWidget()
-        if self.reports:
-            report_list.addItems(self.reports)
-        else:
-            report_list.addItem("No reports for this scan yet.")
-        layout.addWidget(report_list)
-
-        close_btn = QPushButton("Close")
-        close_btn.clicked.connect(dialog.accept)   # accept = close the dialog
-        layout.addWidget(close_btn, 0, Qt.AlignRight)
-
-        dialog.exec()

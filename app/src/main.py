@@ -14,6 +14,7 @@ from pages.vizx.scanning_done_page import ScanDonePage
 from pages.vizx.scanning_stopped_page import ScanStoppedPage
 from pages.vizx.error_page import ErrorPage
 from widgets.clickable_label import ClickableLabel
+from step_model import StepModel
 
 class MainWindow(QWidget) :
     def __init__(self):
@@ -27,13 +28,18 @@ class MainWindow(QWidget) :
         self.setStyleSheet(f"#root {{ background-color: {theme.BACKGROUND}; }}")
 
         # make the pages
-        self.home_page = HomePage()
+                # load the STEP once, and every 3D view shares it
+        self.step_model = StepModel()
+
+        # make the pages
+        self.home_page = HomePage(self.step_model)
         self.vizx_page = VizXPage()
-        self.scan_page = ScanPage()
+        self.scan_page = ScanPage(self.step_model)
         self.jogging_page = JoggingPage()
-        self.done_page = ScanDonePage()
+        self.done_page = ScanDonePage(self.step_model)
         self.stopped_page = ScanStoppedPage()
         self.error_page = ErrorPage()
+
 
         # the stack holds every page, but only shows one at a time
         self.pages = QStackedWidget()

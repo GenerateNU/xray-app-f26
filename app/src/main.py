@@ -52,7 +52,7 @@ class MainWindow(QWidget) :
         self.pages.addWidget(self.error_page)
 
 
-
+        self._set_homed(False)   # unknown position at startup (later: ask the firmware with STATUS?)
 
         # link pages together
         self.home_page.start_requested.connect(self._start_scan)
@@ -70,6 +70,7 @@ class MainWindow(QWidget) :
         self.jogging_page.jog_pressed.connect(self._jog_start)
         self.jogging_page.jog_released.connect(self._jog_stop)
         self.error_page.rehome_requested.connect(self._rehome)
+        self.home_page.home_requested.connect(self._rehome)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -188,11 +189,23 @@ class MainWindow(QWidget) :
         self.error_page.show_error(message)
         self._set_nav_locked(True)                      # lock nav, REHOME is the only way out
         self.pages.setCurrentWidget(self.error_page)
+        #TODO this is should be eventually replaced by a flag instead
+        self._set_homed(False)              # position can't be trusted after an error
+
 
     def _rehome(self):
-        # TODO backend: send HOME to the MCU, and wait until it says it's done
-        self._set_nav_locked(False)                     # machine is reset, unlock the nav
+        """HOME MACHINE (Home page) or REHOME (error page)."""
+        # TODO backend: send HOME, then call _homing_done() when the firmware replies HOMED
+        self._set_nav_locked(True)          # the machine is moving, stay put
         self._open_home()
+        self.home_page.set_homing(True)
+        QTimer.singleShot(1500, self._homing_done)   # TEMP: pretend homing takes 1.5 seconds
+
+    def _homing_done(self):
+        """Homing finished (later: the firmware sent HOMED)."""
+        self.home_page.set_homing(False)
+        self._set_homed(True)
+        self._set_nav_locked(False)
 
     def _style_tab(self, label, active):
         """Same style for both tabs: underlined if active, gray if locked."""
@@ -204,6 +217,11 @@ class MainWindow(QWidget) :
             font-size: {theme.FONT_SIZE_HEADER};
             text-decoration: {underline};
         """)
+
+    def _set_homed(self, homed):
+        """The app's copy of 'is the machine homed?' (later this mirrors what the firmware says)."""
+        self.homed = homed
+        self.home_page.set_homed(homed)
 
 
 if __name__ == "__main__":

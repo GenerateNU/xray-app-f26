@@ -11,6 +11,7 @@ from face_table import FACE_TABLE
 class HomePage(QWidget):
     start_requested = Signal(list, float)   # faces, radiation level
     jog_requested = Signal()
+    home_requested = Signal()   # HOME MACHINE confirmed
 
     def __init__(self, step_model):
         super().__init__()
@@ -25,10 +26,19 @@ class HomePage(QWidget):
                 border: none;
                 border-radius: 14px;
             }}
+
+            QPushButton:disabled {{
+                background-color: {theme.BUTTON_SECONDARY};
+                color: {theme.TEXT_PRIMARY};
+            
+            }}
+            
             QPushButton:pressed {{
                 background-color: {theme.BUTTON_PRESSED};
             }}
         """
+
+
 
         self._build_ui()
 
@@ -87,6 +97,12 @@ class HomePage(QWidget):
         right_col = QVBoxLayout()
         right_col.setSpacing(18)
         right_col.addStretch()   
+
+        self.home_btn = QPushButton("HOME MACHINE")
+        self.home_btn.setFixedSize(195, 48)
+        self.home_btn.setStyleSheet(self.button_style)
+        self.home_btn.clicked.connect(self._on_home)
+        right_col.addWidget(self.home_btn)
 
         self.start_btn = QPushButton("START")
         self.start_btn.setFixedSize(195, 48)
@@ -154,3 +170,31 @@ class HomePage(QWidget):
         """)
         link.clicked.connect(on_click)
         return link
+
+    def _on_home(self):
+        """Confirm before homing, since the gantry is about to move."""
+        popup = QMessageBox(self)
+        popup.setWindowTitle("Home Machine")
+        popup.setIcon(QMessageBox.Icon.Warning)
+        popup.setText("Home the machine?")
+        popup.setInformativeText("The gantry will move to its limit switches. Make sure the area is clear.")
+
+        home_btn = popup.addButton("Home", QMessageBox.ButtonRole.AcceptRole)
+        cancel_btn = popup.addButton(QMessageBox.StandardButton.Cancel)
+        popup.setDefaultButton(cancel_btn)   # Enter = Cancel, same as the final scan check
+
+        popup.exec()
+        if popup.clickedButton() == home_btn:
+            self.home_requested.emit()
+
+    def set_homed(self, homed):
+        """Main (later the backend) calls this. START only works once the machine is homed."""
+        self.start_btn.setEnabled(homed)
+        self.start_btn.setToolTip("" if homed else "Home the machine first")
+
+    def set_homing(self, busy):
+        """While homing: HOME MACHINE shows HOMING... and both buttons are off."""
+        self.home_btn.setEnabled(not busy)
+        self.home_btn.setText("HOMING..." if busy else "HOME MACHINE")
+        if busy:
+            self.start_btn.setEnabled(False)

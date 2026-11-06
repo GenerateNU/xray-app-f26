@@ -1,17 +1,61 @@
-# Software Fall 2026 Template
+# LuX-RAY APP 
+this is the repository for the app for LuX-Ray.
 
-## Repo Structure
-You are free to structure your respective repository(ies) as you wish. However we recommend keeping everything in a
-_monorepo_ so that deployments are easier to handle.
+## Project Structure
+```
+app/src/
+    main.py          # app window, nav bar, page switching
+    theme.py         # all colors and fonts
+    pages/
+        home_page.py # face select, radiation level, START / JOG
+        vizx/        # viz-x, scanning, and jogging pages
+    widgets/         # reusable pieces (status label, etc.)
+```
 
-## Builds and Deployments 
-It is sometimes recommended to have multiple _[Dockerfiles](https://docs.docker.com/reference/dockerfile/)_. I.e. one
-for your backend, frontend, and any other services that you guys will rely on. Using a docker-compose file to
-orchestrate building all your services in conjunction. For further development, you can choose to seperate out
-production and development _Dockerfiles_ seperately (i.e. for compiled projects the build portion is usually different
-if one wishes to develop vs to deploy).
+## Requirements
+Python 3.14 (see `.python-version`)
+- (optional) [`just`](https://github.com/casey/just) for shortcut commands
+  - Mac: `brew install just`
 
-Once completed, please reach out to a _Technical Chief_ if you wish to have some aid deploying.
+### Option 1: Using `just` (recommended)
+
+```bash
+just setup   # make the venv and install all requirements
+just run     # launch the app
+```
+
+Run `just` by itself to see every available command.
+
+---
+
+### Option 2: Without `just`
+
+**1. Make a virtual environment**
+```bash
+python3 -m venv .venv
+```
+
+**2. Activate it**
+```bash
+# Mac / Linux
+source .venv/bin/activate
+
+# Windows
+.venv\Scripts\activate
+```
+
+**3. Install requirements**
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+**4. Run the app**
+```bash
+python app/src/main.py
+```
+
+---
 
 ## Documentation
 Documentation, style-guides, and best practices should be kept in a repo level folder `docs/`. It is crucial to have
@@ -24,3 +68,9 @@ It is critical that on every single merge to main, you enable a specific subset 
 - Deployments (Sometimes its better to allocate another branch for deployments, such as `release` or `production`)
 
 You might find it useful to call some upstream workflows from [Shiperate](https://github.com/GenerateNU/shiperate/tree/main)
+
+## Branch Information: 
+
+gui-3d --> all 3d modeling features
+
+gui --> basic frontend features. 

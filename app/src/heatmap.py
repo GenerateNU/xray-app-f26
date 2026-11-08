@@ -2,17 +2,19 @@ import pyvista as pv
 import numpy as np
 from pathlib import Path
 
+from face_table import FACE_TABLE
 from step_model import StepModel
 from radeyeDriver import Radeye
 from widgets.model_view import ModelView
 
-MODEL = Path(__file__).parent / "assets" / "heat_mesh_1000mm.vtp"
+MODEL = Path(__file__).parent / "assets" / "heat_model.vtp"
 
 class Heatmap(ModelView):
     def __init__(self, step_model, threshold):
         super().__init__(step_model, False)
 
         self.threshold = threshold
+        self.scan_faces = {f for info in FACE_TABLE.values() for f in info["main"] + info["details"]}
 
         self.heat_mesh = pv.read(MODEL).clean()
         
@@ -90,8 +92,9 @@ class Heatmap(ModelView):
         self.add_points(readings, render_points_as_spheres=True, point_size=12,
                         show_scalar_bar=False, name="dots", **style)
 
-        for actor in self.face_actors.values():   # hide the plain faces underneath
-            actor.visibility = False
+        for face_id, actor in self.face_actors.items():
+            if face_id in self.scan_faces:
+                actor.visibility = False
         self.render()
 
 if __name__ == "__main__":
@@ -114,8 +117,8 @@ if __name__ == "__main__":
     view = Heatmap(StepModel(), 1)
     window.setCentralWidget(view)
     window.resize(1000, 750)
-    view.view_xz()
-    view.setEnabled(False)  # never rotates
+    # view.view_xz()
+    # view.setEnabled(False)  # never rotates
     window.show()
     
     timer = QTimer()

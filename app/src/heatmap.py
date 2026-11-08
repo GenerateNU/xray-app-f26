@@ -1,10 +1,12 @@
 import pyvista as pv
 import numpy as np
-# from pathlib import Path
+from pathlib import Path
 
 from step_model import StepModel
 from radeyeDriver import Radeye
 from widgets.model_view import ModelView
+
+MODEL = Path(__file__).parent / "assets" / "heat_mesh_1000mm.vtp"
 
 class Heatmap(ModelView):
     def __init__(self, step_model, threshold):
@@ -12,17 +14,8 @@ class Heatmap(ModelView):
 
         self.threshold = threshold
 
-        """
-        CACHE = Path(__file__).parent / "assets" / "heat_mesh_20mm.vtp"
-                if CACHE.exists():
-                    self.heat_mesh = pv.read(CACHE)
-                else:
-                    mesh = pv.merge(list(step_model.meshes.values()))
-                    self.heat_mesh = mesh.triangulate().subdivide_adaptive(max_edge_len=20.0)
-                    self.heat_mesh.save(CACHE)
-        """
-
-        self.heat_mesh = pv.merge(list(step_model.meshes.values()))
+        self.heat_mesh = pv.read(MODEL).clean()
+        
         self.xyz_mm = np.empty((0, 3))
         self.dose = np.empty(0)
 
@@ -58,11 +51,19 @@ class Heatmap(ModelView):
         y = -443.7 if x > 347.4 else -375.8     # panel sticks out on the right
         return [x, y, z]
 
-    def add_reading(self, xyz, dose):
-        """Add one reading (position in mm, dose in µSv/h) and repaint."""
+    def add_reading(self, xyz, doses):
+        """Add one or many readings and repaint once.
+        xyz: [x, y, z] array in mm. 
+        doses: values in µSv/h."""
+        xyz = np.atleast_2d(np.array(xyz, dtype=float))
+        doses = np.atleast_1d(np.array(doses, dtype=float))
+        
+        if len(xyz) != len(doses):
+            raise ValueError(f"{len(xyz)} positions but {len(doses)} doses")
+
         self.xyz_mm = np.vstack([self.xyz_mm, xyz])
-        self.dose = np.append(self.dose, dose)
-        self._draw_heatmap()
+        self.dose = np.append(self.dose, doses)
+        self._draw_heatmap()        
 
     def clear_readings(self):
         """Wipe the heatmap and go back to the plain model."""
@@ -113,7 +114,10 @@ if __name__ == "__main__":
     view = Heatmap(StepModel(), 1)
     window.setCentralWidget(view)
     window.resize(1000, 750)
+    view.view_xz()
+    view.setEnabled(False)  # never rotates
     window.show()
+    
     timer = QTimer()
 
     def simulate_reading(dose):

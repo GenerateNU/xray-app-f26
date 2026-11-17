@@ -1,7 +1,5 @@
 from PySide6.QtCore import Signal
 from pyvistaqt import QtInteractor
-import numpy as np
-import pyvista as pv
 
 import theme
 from face_table import FACE_TABLE
@@ -41,7 +39,7 @@ class ModelView(QtInteractor):
                 show=False,             # don't draw PyVista's pink outline, we do our own coloring
                 show_message=False,     # don't show PyVista's help text
             )
-            
+
     # ---------- clicking ----------
 
     def _on_pick(self, mesh):
@@ -60,13 +58,12 @@ class ModelView(QtInteractor):
 
         self._color_side(side)
         self.selection_changed.emit(self.selected_sides())
-    
+
     def _color_side(self, side):
         """Paint every face of a side: highlighted if picked, normal if not."""
         color = theme.SELECTED_COLOR if side in self.selected else theme.MODEL_COLOR
         info = FACE_TABLE[side]
         for face_id in info["main"] + info["details"]:
-            #count += 1
             if face_id in self.face_actors:
                 self.face_actors[face_id].prop.color = color
         self.render()                               # redraw so the color change shows

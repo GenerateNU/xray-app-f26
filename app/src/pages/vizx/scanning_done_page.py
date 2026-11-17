@@ -55,7 +55,7 @@ class ScanDonePage(QWidget):
 
         content_row = QHBoxLayout()
         content_row.setSpacing(40)
-        self.model_view = ModelView(self.step_model, selectable=False, display=True)   # view-only, shows what was scanned
+        self.model_view = ModelView(self.step_model, selectable=False)   # view-only, shows what was scanned
         content_row.addWidget(self.model_view, 1)                         # model takes the left side
         content_row.addLayout(self._build_button_col())                   # buttons on the right
 

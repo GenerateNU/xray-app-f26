@@ -122,6 +122,18 @@ class SerialManager():
                 return True
             data = self._parse_get_data(frame)
             self.data.append(data)
+
+    def move_motor_test(self):
+        try:
+            while True:
+                self.ser.write(STX)
+                print("sent!")
+                time.sleep(1)
+        except KeyboardInterrupt:
+                print("stopping")
+        finally:
+                self.ser.close()
+                    
             
 
 

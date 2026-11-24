@@ -14,8 +14,8 @@ class Heatmap(ModelView):
         super().__init__(step_model, False)
 
         self.threshold = threshold
-        self.scan_faces = {f for info in FACE_TABLE.values() for f in info["main"] + info["details"]}
-
+        self.scan_faces = [12, 33, 36, 37, 38, 39, 40, 13, 28, 32, 41, 42, 73, 74, 75, 76, 21, 19, 15, 23, 25, 16, 22, 71, 72]
+        
         self.heat_mesh = pv.read(MODEL).clean()
         
         self.xyz_mm = np.empty((0, 3))
@@ -95,6 +95,7 @@ class Heatmap(ModelView):
         for face_id, actor in self.face_actors.items():
             if face_id in self.scan_faces:
                 actor.visibility = False
+
         self.render()
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
     QWidget, QPushButton, QVBoxLayout, QHBoxLayout,
     QMessageBox, QInputDialog, QDialog, QListWidget
 )
+from heatmap import Heatmap
 import theme
 from widgets.status import StatusLabel
 from widgets.clickable_label import ClickableLabel
@@ -55,7 +56,8 @@ class ScanDonePage(QWidget):
 
         content_row = QHBoxLayout()
         content_row.setSpacing(40)
-        self.model_view = ModelView(self.step_model, selectable=False)   # view-only, shows what was scanned
+        self.model_view = Heatmap(self.step_model, 1)   # view-only, shows what was scanned
+        
         content_row.addWidget(self.model_view, 1)                         # model takes the left side
         content_row.addLayout(self._build_button_col())                   # buttons on the right
 

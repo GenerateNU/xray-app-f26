@@ -40,7 +40,6 @@ class MainWindow(QWidget) :
         self.stopped_page = ScanStoppedPage()
         self.error_page = ErrorPage()
 
-
         # the stack holds every page, but only shows one at a time
         self.pages = QStackedWidget()
         self.pages.addWidget(self.home_page)
@@ -131,7 +130,7 @@ class MainWindow(QWidget) :
         self._set_nav_locked(True) 
 
         #placeholder, remove when backend is impl.
-        QTimer.singleShot(2000, lambda: self.scan_page.set_progress(100))   # TEMP TEST, DELETE AFTER
+        QTimer.singleShot(20000, lambda: self.scan_page.set_progress(100))   # TEMP TEST, DELETE AFTER
 
         #PLACEHOLDER --> ERROR SITUATION
         #QTimer.singleShot(1000, lambda: self._system_error("Radiation level exceeded threshold"))   # TEMP TEST. DELETE AFTER

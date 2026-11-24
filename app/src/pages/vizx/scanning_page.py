@@ -1,6 +1,7 @@
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QTimer, Qt, Signal
 from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout
-from app.src.heatmap import Heatmap
+import numpy as np
+from heatmap import Heatmap
 import theme
 from widgets.status import StatusLabel
 from widgets.progress_bar import ProgressBar
@@ -31,6 +32,9 @@ class ScanPage(QWidget):
                 background-color: {theme.BUTTON_PRESSED};
             }}
         """
+        
+        self.reading_timer = QTimer(self)
+        self.reading_timer.timeout.connect(self._simulate_reading)
 
         self._build_ui()
 
@@ -80,6 +84,11 @@ class ScanPage(QWidget):
         self.progress.set_progress(0)          # new scan starts empty
         self.model_view.set_selected(faces)    # show which sides are being scanned
 
+        self.model_view.threshold = level
+        self.model_view.clear_readings()
+        self.reading_timer.start(100)
+
+
     def set_progress(self, percent):
         """The backend calls this with the real scan progress."""
         self.progress.set_progress(percent)
@@ -88,4 +97,11 @@ class ScanPage(QWidget):
 
     def finish_scan(self):
         """Scan's done. Called at 100%, or later by the backend when the MCU says so."""
+        self.reading_timer.stop()
         self.scan_finished.emit(self.faces, self.radiation_level)
+
+    def _simulate_reading(self):
+        rng = np.random.default_rng()
+
+        self.model_view.add_reading(self.model_view.generate_position(), rng.uniform(0.1, 1.2))
+        #window.statusBar().showMessage(f"Latest: {dose:.2f} µSv/h   |   Readings: {len(self.model_view.dose)}")

@@ -124,6 +124,7 @@ class SerialManager():
             self.data.append(data)
 
     def move_motor_test(self):
+        "testing to move motor via app"
         try:
             while True:
                 self.ser.write(STX)
@@ -149,4 +150,3 @@ if __name__ == "__main__":
         print("stopping")
     finally:
         ser.close()
-        

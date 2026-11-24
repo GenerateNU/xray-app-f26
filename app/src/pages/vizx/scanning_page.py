@@ -1,5 +1,6 @@
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout
+from app.src.heatmap import Heatmap
 import theme
 from widgets.status import StatusLabel
 from widgets.progress_bar import ProgressBar
@@ -50,7 +51,7 @@ class ScanPage(QWidget):
         content_row.setSpacing(40)
         self.progress = ProgressBar()
         content_row.addWidget(self.progress)                              # progress bar on the far left
-        self.model_view = ModelView(self.step_model, selectable=False)   # view-only during a scan
+        self.model_view = Heatmap(self.step_model, 1)                     # view-only during a scan
         content_row.addWidget(self.model_view, 1)                         # model takes the middle
         content_row.addLayout(self._build_button_col())                   # STOP on the right
 

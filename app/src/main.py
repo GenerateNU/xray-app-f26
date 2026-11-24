@@ -16,6 +16,10 @@ from pages.vizx.error_page import ErrorPage
 from widgets.clickable_label import ClickableLabel
 from step_model import StepModel
 
+# BACKEND ------------------------------------------------------------------------------
+import config
+from backend.serial_backend import SerialBackend
+
 class MainWindow(QWidget) :
     def __init__(self):
         super().__init__()
@@ -81,6 +85,11 @@ class MainWindow(QWidget) :
         self.pages.currentChanged.connect(self._update_nav)
         self._update_nav()
 
+        # ---------- backend (talks to the MCU) ----------
+        self.backend = SerialBackend(config.SERIAL_PORT, config.SERIAL_BAUD)
+        self._connect_backend()          # hook up its signals FIRST...
+        self.backend.open_connection()   # ...then connect
+
     def _set_nav_locked(self, locked):
         """Turn the nav tabs off during a scan so STOP is the only way out."""
         self.home_label.setEnabled(not locked)
@@ -131,75 +140,44 @@ class MainWindow(QWidget) :
 
     def _start_scan(self, faces, level):
         self.scan_page.start_scan(faces, level)  # give the scan page the data
-        self._open_scan()   
-        self._set_nav_locked(True) 
-
-        #placeholder, remove when backend is impl.
-        QTimer.singleShot(2000, lambda: self.scan_page.set_progress(100))   # TEMP TEST, DELETE AFTER
-
-        #PLACEHOLDER --> ERROR SITUATION
-        #QTimer.singleShot(1000, lambda: self._system_error("Radiation level exceeded threshold"))   # TEMP TEST. DELETE AFTER
+        self._open_scan()
+        self._set_nav_locked(True)
+        self.backend.start_scan(faces, level)    # tell the MCU to start
 
 
     def _pause_scan(self):
-        # TODO backend: tell the MCU to pause
+        self.backend.pause()
         self.pages.setCurrentWidget(self.stopped_page)   # nav stays locked, scan isn't over
 
     def _resume_scan(self):
-        # TODO backend: tell the MCU to resume
+        self.backend.resume()
         self._open_scan()                                 # progress is still there
 
     def _cancel_scan(self):
-        # TODO backend: tell the MCU to abort
+        self.backend.abort()
         self._set_nav_locked(False)                       # scan's over, unlock the nav
         self._open_home()
 
-    def _finish_scan(self, faces, level):
-        # ignore it if we're not on the scanning page (paused or cancelled)
-        if self.pages.currentWidget() != self.scan_page:
-            return
-
-        self.done_page.show_results(faces, level)
-
-        #TEMPORARY
-        self.done_page.set_reports(["side1: max 0.4 μSv/h", "side2: max 0.9 μSv/h"])   # TEMP TEST
-
-
-        self._set_nav_locked(False)
-        self._open_done()
-
-    def _update_nav(self, index=None):
-        """Underline the tab for whichever page is showing."""
-        on_home = self.pages.currentWidget() == self.home_page
-        self._style_tab(self.home_label, active=on_home)
-        self._style_tab(self.vizx_label, active=not on_home)  # viz-x, scanning, jogging all count as viz-x
-
     def _jog_start(self, axis, direction):
-        # TODO backend: send "JOG <axis><+/->" to the MCU
-        print("MAIN GOT JOG:", axis, direction)   # TEMPORARY
+        self.backend.jog(axis, direction)
 
     def _jog_stop(self):
-        # TODO backend: send "JOG STOP" to the MCU
-        print("MAIN GOT JOG STOP")                # TEMPORARY
+        self.backend.jog_stop()
 
     def _system_error(self, message):
-        """Something serious happened (e-stop, radiation over threshold...). Works from any page.
-        Later the backend calls this when the MCU reports an error."""
-        # TODO backend: make sure the MCU has stopped everything
+        """Something serious happened (e-stop, fault...). Works from any page."""
+        self.backend.abort()                            # make sure the MCU stops everything
         self.error_page.show_error(message)
         self._set_nav_locked(True)                      # lock nav, REHOME is the only way out
         self.pages.setCurrentWidget(self.error_page)
-        #TODO this is should be eventually replaced by a flag instead
-        self._set_homed(False)              # position can't be trusted after an error
-
+        self._set_homed(False)                          # position can't be trusted after an error
 
     def _rehome(self):
         """HOME MACHINE (Home page) or REHOME (error page)."""
-        # TODO backend: send HOME, then call _homing_done() when the firmware replies HOMED
         self._set_nav_locked(True)          # the machine is moving, stay put
         self._open_home()
         self.home_page.set_homing(True)
-        QTimer.singleShot(1500, self._homing_done)   # TEMP: pretend homing takes 1.5 seconds
+        self.backend.home()                 # _homing_done runs when the MCU replies HOMED (step C)
 
     def _homing_done(self):
         """Homing finished (later: the firmware sent HOMED)."""
@@ -222,6 +200,15 @@ class MainWindow(QWidget) :
         """The app's copy of 'is the machine homed?' (later this mirrors what the firmware says)."""
         self.homed = homed
         self.home_page.set_homed(homed)
+
+    def _connect_backend(self):
+        """Machine → app: what happens when the backend reports something. (Step C adds the rest.)"""
+        self.backend.connection_changed.connect(lambda ok: print("connected:", ok))
+
+    def closeEvent(self, event):
+        """The window is closing: stop the reader thread and close the port cleanly."""
+        self.backend.close_connection()
+        super().closeEvent(event)
 
 
 if __name__ == "__main__":

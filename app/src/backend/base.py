@@ -2,7 +2,7 @@ from PySide6.QtCore import QObject, Signal
 
 
 class Backend(QObject):
-    """WHAT THE BACKEND IS CAPABLE OF AHAHAHA MAIN TALKS TO DIS ONLY>"""
+    """What every backend (real serial or fake) can do. main.py only ever talks to this."""
 
     # ---------- machine → app (signals) ----------
     connection_changed = Signal(bool)        # True = talking to the MCU, False = not

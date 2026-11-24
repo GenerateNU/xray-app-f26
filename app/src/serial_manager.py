@@ -8,33 +8,27 @@ ETX =  b"\x03"
 END_SCAN = b"something"
 
 class SerialManager():
-    def __init__(self):
+    def __init__(self, port):
         self.buf = b''
-        self.ser = serial.Serial("find out later", baudrate=115200)
+        self.ser = serial.Serial(port, baudrate=115200, timeout=1)
         self.data = []
 
-    def _confirm_ack(self):
-         start_time = time.monotonic()
-         while self.ser.in_waiting:
-            byte = self.ser.read(1).decode('ascii')
-
-            print(byte)
-
-            if byte == b'ACK':
-                return True
-
-            if time.monotonic() - start_time > 5:
-                print("timed out")
-                return False
+    def _confirm_ack(self, timeout=2.0):
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            b = self.ser.read(1)
+            if b:
+                print("got:", b.hex())
+                if b[0] == 0x06:
+                    print("ACK received")
+                    return True
+        print("timed out")
+        return False
 
     def _confirm_wake(self):
-        self.ser.reset_input_buffer()
-        self.ser.reset_output_buffer()
-
         self.ser.write(b'@')
         self.ser.flush()
-
-        return self._confirm_ack()
+        print("sent @")
          
     def _confirm_scan_info(self, threshold, faces):
         """
@@ -131,7 +125,16 @@ class SerialManager():
             
 
 
+if __name__ == "__main__":
+    ser = serial.Serial("/dev/tty.usbmodem101", baudrate=115200)
 
-
-                
+    try:
+        while True:
+            ser.write(STX)
+            print("sent!")
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("stopping")
+    finally:
+        ser.close()
         

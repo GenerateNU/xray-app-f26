@@ -52,8 +52,6 @@ class MainWindow(QWidget) :
         self.pages.addWidget(self.error_page)
 
 
-
-
         # link pages together
         self.home_page.start_requested.connect(self._start_scan)
         self.home_page.jog_requested.connect(self._open_jogging)
@@ -69,7 +67,6 @@ class MainWindow(QWidget) :
         self.done_page.jog_requested.connect(self._open_jogging)
         self.jogging_page.jog_pressed.connect(self._jog_start)
         self.jogging_page.jog_released.connect(self._jog_stop)
-        self.error_page.rehome_requested.connect(self._rehome)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -188,11 +185,9 @@ class MainWindow(QWidget) :
         self.error_page.show_error(message)
         self._set_nav_locked(True)                      # lock nav, REHOME is the only way out
         self.pages.setCurrentWidget(self.error_page)
+        #TODO this is should be eventually replaced by a flag instead
 
-    def _rehome(self):
-        # TODO backend: send HOME to the MCU, and wait until it says it's done
-        self._set_nav_locked(False)                     # machine is reset, unlock the nav
-        self._open_home()
+
 
     def _style_tab(self, label, active):
         """Same style for both tabs: underlined if active, gray if locked."""
@@ -204,6 +199,7 @@ class MainWindow(QWidget) :
             font-size: {theme.FONT_SIZE_HEADER};
             text-decoration: {underline};
         """)
+
 
 
 if __name__ == "__main__":

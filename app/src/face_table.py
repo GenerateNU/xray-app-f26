@@ -9,7 +9,7 @@ Re-run view_sides.py to check the colors still line up.
 FACE_TABLE = {
     "side1": {                              # +Y side
         "normal": (0, 1, 0),
-        "main": [12],                   # big flat faces to sweep
+        "main": [12, 29],                   # big flat faces to sweep
         "details": [33, 36, 37, 38, 39, 40],   # recessed band + small box sticking out
     },
     "side2": {                              # -Y side

@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+
+# tools
+.mypy_cache/
+.venv/
+
+# PyInstaller output
+build/
+dist/
+
+# macOS
+.DS_Store

@@ -25,10 +25,14 @@ class HomePage(QWidget):
                 border: none;
                 border-radius: 14px;
             }}
+
+            
             QPushButton:pressed {{
                 background-color: {theme.BUTTON_PRESSED};
             }}
         """
+
+
 
         self._build_ui()
 
